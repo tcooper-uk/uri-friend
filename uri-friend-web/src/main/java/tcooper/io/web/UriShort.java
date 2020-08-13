@@ -1,33 +1,55 @@
 package tcooper.io.web;
 
+import tcooper.io.UriShortener;
+import tcooper.io.database.DevRepository;
+import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
-import tcooper.io.uri.UriParser;
+import tcooper.io.uri.UriService;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.net.URI;
+import java.net.URISyntaxException;
 
 @Path("/u")
 @Produces(MediaType.APPLICATION_JSON)
 public class UriShort {
 
+    private UriService uriService;
+    private UriRepository uriRepo;
+    private UriShortener uriShortener;
+
+    {
+        uriService = new UriService();
+        uriRepo = new DevRepository();
+        uriShortener = new UriShortener(uriRepo, uriService);
+    }
 
     @Path("short")
     @POST
     public URIInfo shortenUri(@QueryParam("url") String url) {
         System.out.println("URL to shorten: " + url);
-        URI uri = UriParser.parse(url).get();
-        return new URIInfo(uri, uri);
+
+        try {
+            return uriShortener.shortenUri(url);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return new URIInfo();
+        }
     }
 
     @Path("resolve")
     @POST
     public URIInfo resolveUri(@QueryParam("url") String url){
         System.out.println("URL to resolve: " + url);
-        URI uri = UriParser.parse(url).get();
-        return new URIInfo(uri, uri);
+
+        try {
+            return uriShortener.resolveUri(url);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return new URIInfo();
+        }
     }
 }

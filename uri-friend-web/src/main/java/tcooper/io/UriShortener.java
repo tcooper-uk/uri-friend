@@ -1,5 +1,6 @@
 package tcooper.io;
 
+import com.google.common.base.Strings;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
 import tcooper.io.uri.UriParser;
@@ -85,11 +86,20 @@ public class UriShortener {
     }
 
     private URI parseUriString(String inputUri) throws URISyntaxException {
-        var uri = UriParser.parse(inputUri);
+        var uriOpt = UriParser.parse(inputUri);
 
-        if(uri.isEmpty())
+        boolean isValid = true;
+        isValid &= uriOpt.isPresent();
+
+        if(isValid){
+            var uri = uriOpt.get();
+            isValid &= !Strings.isNullOrEmpty(uri.getScheme());
+            isValid &= !Strings.isNullOrEmpty(uri.getAuthority());
+        }
+
+        if(!isValid)
             throw new URISyntaxException(inputUri, BAD_URI_ERROR);
 
-        return uri.get();
+        return uriOpt.get();
     }
 }

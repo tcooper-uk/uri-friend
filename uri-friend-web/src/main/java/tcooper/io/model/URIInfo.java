@@ -13,6 +13,9 @@ public class URIInfo {
     @JsonIgnore
     private LocalDateTime expiration;
 
+    public URIInfo() {
+    }
+
     public URIInfo(URI originalUri, URI shortUri) {
         this.originalUri = originalUri;
         this.shortUri = shortUri;
