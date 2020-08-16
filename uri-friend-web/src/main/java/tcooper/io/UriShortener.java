@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 
 public class UriShortener {
 
+    private static final char URI_QUERY_INDICATOR = '?';
+    private static final char URI_FRAGMENT_INDICATOR = '#';
+
     private static final String BAD_URI_ERROR = "The supplied URI is invalid.";
 
     private UriRepository uriRepository;
@@ -74,13 +77,17 @@ public class UriShortener {
     }
 
     private String buildRelativePath(URI uri) {
-        StringBuilder builder = new StringBuilder(uri.getPath());
+        StringBuilder builder = new StringBuilder(uri.getRawPath());
 
-        if(uri.getQuery() != null)
-            builder.append(uri.getQuery());
+        if(uri.getQuery() != null) {
+            builder.append(URI_QUERY_INDICATOR);
+            builder.append(uri.getRawQuery());
+        }
 
-        if(uri.getFragment() != null)
-            builder.append(uri.getFragment());
+        if(uri.getFragment() != null) {
+            builder.append(URI_FRAGMENT_INDICATOR);
+            builder.append(uri.getRawFragment());
+        }
 
         return builder.toString();
     }

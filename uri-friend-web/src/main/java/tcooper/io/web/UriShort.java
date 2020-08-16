@@ -21,10 +21,21 @@ public class UriShort {
     private UriRepository uriRepo;
     private UriShortener uriShortener;
 
-    {
+    /**
+     * Setup basic controller with test deps
+     */
+    public UriShort() {
         uriService = new UriService();
         uriRepo = new DevRepository();
         uriShortener = new UriShortener(uriRepo, uriService);
+    }
+
+    /**
+     * Setup controller with injected deps
+     * @param uriShortener
+     */
+    public UriShort(UriShortener uriShortener) {
+        this.uriShortener = uriShortener;
     }
 
     @Path("short")

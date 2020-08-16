@@ -2,6 +2,9 @@ package tcooper.io;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -32,27 +35,37 @@ public class UriShortenerTest {
     @DisplayName("When I have a URI to shorten")
     @Nested
     class ShortenUrlTest{
+
         @DisplayName("Then a short URI is created")
         @Test
         void canShortenUri() throws URISyntaxException {
-
-            String url = "http://test.com/a_new_uri?query=test#bookmark";
+            ArgumentCaptor<String> scheme = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> authority = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> relativePath = ArgumentCaptor.forClass(String.class);
 
             when(uriRepository.upsertScheme(anyString())).thenReturn(1L);
             when(uriRepository.upsertAuthority(anyString())).thenReturn(3L);
             when(uriRepository.upsertRelativePath(anyString())).thenReturn(5L);
 
+            String url = "http://test.com/a_new_uri?query=test&another=test#bookmark";
+
             URIInfo uriInfo = uriShortener.shortenUri(url);
 
+            verify(uriRepository).upsertScheme(scheme.capture());
+            verify(uriRepository).upsertAuthority(authority.capture());
+            verify(uriRepository).upsertRelativePath(relativePath.capture());
             verify(uriService, atMostOnce()).shortenUri(any(long[].class));
+
+            assertEquals("http", scheme.getValue());
+            assertEquals("test.com", authority.getValue());
+            assertEquals("/a_new_uri?query=test&another=test#bookmark", relativePath.getValue());
             assertTrue(uriInfo.getShortUri().toString().matches("http:\\/\\/example\\.com\\/1.3.5"));
         }
 
         @DisplayName("Then an error is thrown when the URI is not valid")
-        @Test
-        void cannotShortenInvalidUri() {
-            String url = "12345-$%";
-
+        @ParameterizedTest
+        @ValueSource(strings = {"12345-$%", "test", "check-this"})
+        void cannotShortenInvalidUri(String url) {
             assertThrows(URISyntaxException.class, () -> uriShortener.shortenUri(url));
         }
     }
