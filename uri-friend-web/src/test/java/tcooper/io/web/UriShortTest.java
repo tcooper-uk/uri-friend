@@ -48,7 +48,7 @@ public class UriShortTest {
         @DisplayName("Then the endpoint calls to resolve the URL")
         @Test
         public void canPostShortUri() throws URISyntaxException {
-            when(uriShortener.resolveUri(anyString())).thenReturn(new URIInfo());
+            when(uriShortener.shortenUri(anyString())).thenReturn(new URIInfo());
             String url = "http://google.com/s?q=test";
 
             uriShort.resolveUri(url);

@@ -14,6 +14,7 @@ import tcooper.io.model.URIInfo;
 import tcooper.io.uri.UriService;
 
 import java.net.URISyntaxException;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +39,7 @@ public class UriShortenerTest {
 
         @DisplayName("Then a short URI is created")
         @Test
-        void canShortenUri() throws URISyntaxException {
+        void canShortenUri() throws URISyntaxException, SQLException {
             ArgumentCaptor<String> scheme = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> authority = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> relativePath = ArgumentCaptor.forClass(String.class);
@@ -76,7 +77,7 @@ public class UriShortenerTest {
 
         @DisplayName("Then a full URI can be resolved from database")
         @Test
-        void fullUriCanBeFound() throws URISyntaxException {
+        void fullUriCanBeFound() throws URISyntaxException, SQLException {
 
             String shortUrl = "http://example.com/1d3g5";
 
@@ -100,7 +101,7 @@ public class UriShortenerTest {
 
         @DisplayName("Then an error is thrown when the ID cannot be found")
         @Test
-        void idNotFoundInDatabase(){
+        void idNotFoundInDatabase() throws SQLException {
             String shortUrl = "http://example.com/1d3g5";
 
             when(uriRepository.getScheme(anyLong())).thenReturn(null);

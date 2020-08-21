@@ -8,6 +8,7 @@ import tcooper.io.uri.UriService;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 public class UriShortener {
@@ -34,13 +35,18 @@ public class UriShortener {
 
         var uri = parseUriString(uriStr);
 
-        long schemeId = uriRepository.upsertScheme(uri.getScheme());
-        long authorityId = uriRepository.upsertAuthority(uri.getAuthority());
-        long relativePathId = uriRepository.upsertRelativePath(buildRelativePath(uri));
+        try {
+            long schemeId = uriRepository.upsertScheme(uri.getScheme());
+            long authorityId = uriRepository.upsertAuthority(uri.getAuthority());
+            long relativePathId = uriRepository.upsertRelativePath(buildRelativePath(uri));
 
-        URI shortUri = uriService.shortenUri(new long[] {schemeId, authorityId, relativePathId});
+            URI shortUri = uriService.shortenUri(new long[] {schemeId, authorityId, relativePathId});
 
-        return new URIInfo(uri, shortUri, LocalDateTime.now().plusDays(30));
+            return new URIInfo(uri, shortUri, LocalDateTime.now().plusDays(30));
+
+        } catch (SQLException e) {
+            return new URIInfo();
+        }
     }
 
     /**
@@ -53,27 +59,32 @@ public class UriShortener {
 
         long[] ids = uriService.decomposeUri(shortUri);
 
-        String scheme = uriRepository.getScheme(ids[0]);
-        String authority = uriRepository.getAuthority(ids[1]);
-        String relativePath = uriRepository.getRelativePath(ids[2]);
+        try {
+            String scheme = uriRepository.getScheme(ids[0]);
+            String authority = uriRepository.getAuthority(ids[1]);
+            String relativePath = uriRepository.getRelativePath(ids[2]);
 
-        if(scheme == null || authority == null || relativePath == null){
-            throw new IllegalStateException("Unable to find the required items in the database");
+            if(scheme == null || authority == null || relativePath == null){
+                throw new IllegalStateException("Unable to find the required items in the database");
+            }
+
+            StringBuilder builder = new StringBuilder(scheme);
+            builder.append("://")
+                    .append(authority)
+                    .append(relativePath);
+
+            var dbUriStr = builder.toString();
+            var uri = UriParser.parse(dbUriStr);
+
+            if(uri.isEmpty()){
+                throw new URISyntaxException(dbUriStr, "Database values od not conform to URI standard");
+            }
+
+            return new URIInfo(uri.get(), shortUri,LocalDateTime.now());
+
+        } catch (SQLException e) {
+            return new URIInfo();
         }
-
-        StringBuilder builder = new StringBuilder(scheme);
-        builder.append("://")
-                .append(authority)
-                .append(relativePath);
-
-        var dbUriStr = builder.toString();
-        var uri = UriParser.parse(dbUriStr);
-
-        if(uri.isEmpty()){
-            throw new URISyntaxException(dbUriStr, "Database values od not conform to URI standard");
-        }
-
-        return new URIInfo(uri.get(), shortUri,LocalDateTime.now());
     }
 
     private String buildRelativePath(URI uri) {

@@ -1,7 +1,7 @@
 package tcooper.io.web;
 
 import tcooper.io.UriShortener;
-import tcooper.io.database.DevRepository;
+import tcooper.io.database.JdbcPostgres;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
 import tcooper.io.uri.UriService;
@@ -26,7 +26,7 @@ public class UriShort {
      */
     public UriShort() {
         uriService = new UriService();
-        uriRepo = new DevRepository();
+        uriRepo = new JdbcPostgres();
         uriShortener = new UriShortener(uriRepo, uriService);
     }
 
