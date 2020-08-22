@@ -1,32 +1,30 @@
 package tcooper.io.database;
 
+import org.postgresql.ds.PGConnectionPoolDataSource;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import static java.sql.DriverManager.getConnection;
-import static tcooper.io.database.UriRepoStatements.UPSERT_AUTHORITY_SQL;
-import static tcooper.io.database.UriRepoStatements.UPSERT_RELATIVE_PATH_SQL;
 
 /**
  * Repository basic JDBC implementation for local postgres db.
  */
 public class JdbcPostgres implements UriRepository {
 
-    private static Connection _dbConnection;
+    private final Connection _dbConnection;
 
-    static {
-        try {
-            _dbConnection = getConnection("jdbc:postgresql:uri_short");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    public JdbcPostgres(String jdbcUrl) throws SQLException {
+
+        var ds = new PGConnectionPoolDataSource();
+        ds.setURL(jdbcUrl);
+
+        _dbConnection = ds.getConnection();
     }
 
     @Override
     public long upsertScheme(String scheme) throws SQLException {
-
         var statement = _dbConnection.prepareStatement(UriRepoStatements.UPSERT_SCHEME_SQL, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, scheme);
 
@@ -43,7 +41,7 @@ public class JdbcPostgres implements UriRepository {
     @Override
     public long upsertAuthority(String authority) throws SQLException {
 
-        var statement = _dbConnection.prepareStatement(UPSERT_AUTHORITY_SQL, Statement.RETURN_GENERATED_KEYS);
+        var statement = _dbConnection.prepareStatement(UriRepoStatements.UPSERT_AUTHORITY_SQL, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, authority);
 
         statement.executeUpdate();
@@ -59,7 +57,7 @@ public class JdbcPostgres implements UriRepository {
     @Override
     public long upsertRelativePath(String relativePath) throws SQLException {
 
-        var statement = _dbConnection.prepareStatement(UPSERT_RELATIVE_PATH_SQL, Statement.RETURN_GENERATED_KEYS);
+        var statement = _dbConnection.prepareStatement(UriRepoStatements.UPSERT_RELATIVE_PATH_SQL, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, relativePath);
 
         statement.executeUpdate();

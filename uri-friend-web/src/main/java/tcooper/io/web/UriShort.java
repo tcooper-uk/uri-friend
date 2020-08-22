@@ -2,6 +2,7 @@ package tcooper.io.web;
 
 import tcooper.io.UriShortener;
 import tcooper.io.database.JdbcPostgres;
+import tcooper.io.database.JdbiRepository;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
 import tcooper.io.uri.UriService;
@@ -12,6 +13,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.net.URISyntaxException;
+import java.sql.SQLException;
 
 @Path("/u")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,9 +26,9 @@ public class UriShort {
     /**
      * Setup basic controller with test deps
      */
-    public UriShort() {
+    public UriShort() throws SQLException {
         uriService = new UriService();
-        uriRepo = new JdbcPostgres();
+        uriRepo = new JdbiRepository("jdbc:postgresql:uri_short");
         uriShortener = new UriShortener(uriRepo, uriService);
     }
 

@@ -106,6 +106,13 @@
             <version>42.2.15</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.jdbi/jdbi3-core -->
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-core</artifactId>
+            <version>3.14.3</version>
+        </dependency>
+
 
     </dependencies>
 </project>
