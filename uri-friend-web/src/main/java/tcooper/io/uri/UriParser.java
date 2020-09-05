@@ -1,13 +1,14 @@
 package tcooper.io.uri;
 
-import org.jetbrains.annotations.NotNull;
-
+import com.google.common.base.Preconditions;
 import java.net.URI;
 import java.util.Optional;
 
 public class UriParser {
 
-    public static Optional<URI> parse(@NotNull String url) {
+    public static Optional<URI> parse(String url) {
+
+        Preconditions.checkArgument(url != null, "Url cannot be null");
 
         try {
             var uri = URI.create(url);

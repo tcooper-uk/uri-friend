@@ -6,6 +6,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+
 import tcooper.io.web.WebApplication;
 
 public class Application {
