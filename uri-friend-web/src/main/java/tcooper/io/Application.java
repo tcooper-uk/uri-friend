@@ -38,8 +38,7 @@ public class Application {
      * @return ServletContextHandler
      */
     private static Handler getRESTEasyHandler() {
-        ServletContextHandler handler =
-                new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        ServletContextHandler handler = new ServletContextHandler();
 
         ServletHolder servlet = handler.addServlet(HttpServletDispatcher.class, "/");
 
