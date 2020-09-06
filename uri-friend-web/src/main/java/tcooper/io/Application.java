@@ -3,6 +3,7 @@ package tcooper.io;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.internal.cglib.proxy.$MethodProxy;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -12,6 +13,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
 import tcooper.io.guice.DataModule;
 import tcooper.io.guice.JettyModule;
+import tcooper.io.guice.JettyModule.Port;
 import tcooper.io.guice.ResourceModule;
 import tcooper.io.guice.RestEasyModule;
 
@@ -19,12 +21,15 @@ public class Application {
 
     private final GuiceFilter filter;
     private final GuiceResteasyBootstrapServletContextListener listener;
+    private final int port;
 
     @Inject
     public Application(GuiceFilter filter,
-        GuiceResteasyBootstrapServletContextListener listener) {
+        GuiceResteasyBootstrapServletContextListener listener,
+        @Port int port) {
         this.filter = filter;
         this.listener = listener;
+        this.port = port;
     }
 
     private static Injector bootstrap() {
@@ -39,8 +44,8 @@ public class Application {
     public void run() throws Exception {
         System.out.println("Starting...");
 
-        // start server on 8080
-        var server = createServer(8080);
+        // start server
+        var server = createServer(port);
         server.start();
         server.join();
 
@@ -72,7 +77,7 @@ public class Application {
         // RESTEasy listener for requests dispatched from guice
         handler.addEventListener(listener);
 
-        // fallback servlet for any requests not matched
+        // fallback servlet
         handler.addServlet(DefaultServlet.class, "/");
 
         return handler;
