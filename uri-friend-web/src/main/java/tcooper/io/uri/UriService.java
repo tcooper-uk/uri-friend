@@ -2,10 +2,11 @@ package tcooper.io.uri;
 
 import com.google.common.primitives.Longs;
 
+import com.google.inject.Singleton;
 import java.net.URI;
 import java.util.Random;
 
-
+@Singleton
 public class UriService {
 
     // We will move this out somewhere else

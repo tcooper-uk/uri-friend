@@ -1,14 +1,16 @@
 package tcooper.io.database;
 
-import org.jdbi.v3.core.Jdbi;
-
+import com.google.inject.Inject;
 import java.sql.SQLException;
+import org.jdbi.v3.core.Jdbi;
+import tcooper.io.guice.DataModule.JdbcUrl;
 
 public class JdbiRepository implements UriRepository {
 
     private final Jdbi _jdbi;
 
-    public JdbiRepository(String jdbcUrl) {
+    @Inject
+    public JdbiRepository(@JdbcUrl String jdbcUrl) {
         _jdbi = Jdbi.create(jdbcUrl);
     }
 

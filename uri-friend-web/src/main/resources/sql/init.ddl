@@ -1,4 +1,3 @@
-
 CREATE TABLE scheme (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     scheme varchar(10) NOT NULL,

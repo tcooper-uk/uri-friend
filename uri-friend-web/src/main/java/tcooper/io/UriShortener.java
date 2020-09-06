@@ -1,6 +1,7 @@
 package tcooper.io;
 
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
 import tcooper.io.uri.UriParser;
@@ -21,6 +22,7 @@ public class UriShortener {
     private UriRepository uriRepository;
     private UriService uriService;
 
+    @Inject
     public UriShortener(UriRepository uriRepository, UriService uriService) {
         this.uriRepository = uriRepository;
         this.uriService = uriService;
