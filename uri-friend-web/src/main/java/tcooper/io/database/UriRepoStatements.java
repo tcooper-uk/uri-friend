@@ -1,6 +1,6 @@
 package tcooper.io.database;
 
-public class UriRepoStatements {
+class UriRepoStatements {
 
     static final String UPSERT_SCHEME_SQL = "INSERT INTO scheme (scheme) VALUES (?) ON CONFLICT(scheme) DO UPDATE SET scheme = EXCLUDED.scheme";
     static final String UPSERT_AUTHORITY_SQL = "INSERT INTO authority (authority) VALUES (?) ON CONFLICT(authority) DO UPDATE SET authority = EXCLUDED.authority";

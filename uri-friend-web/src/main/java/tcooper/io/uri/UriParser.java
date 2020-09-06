@@ -1,9 +1,11 @@
 package tcooper.io.uri;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Singleton;
 import java.net.URI;
 import java.util.Optional;
 
+@Singleton
 public class UriParser {
 
     public static Optional<URI> parse(String url) {

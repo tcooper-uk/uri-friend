@@ -1,5 +1,7 @@
 package tcooper.io.web;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import tcooper.io.UriShortener;
 import tcooper.io.database.JdbcPostgres;
 import tcooper.io.database.JdbiRepository;
@@ -15,27 +17,18 @@ import javax.ws.rs.core.MediaType;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 
+@Singleton
 @Path("/u")
 @Produces(MediaType.APPLICATION_JSON)
 public class UriShort {
 
-    private UriService uriService;
-    private UriRepository uriRepo;
-    private UriShortener uriShortener;
-
-    /**
-     * Setup basic controller with test deps
-     */
-    public UriShort() throws SQLException {
-        uriService = new UriService();
-        uriRepo = new JdbiRepository("jdbc:postgresql:uri_short");
-        uriShortener = new UriShortener(uriRepo, uriService);
-    }
+    private final UriShortener uriShortener;
 
     /**
      * Setup controller with injected deps
      * @param uriShortener
      */
+    @Inject
     public UriShort(UriShortener uriShortener) {
         this.uriShortener = uriShortener;
     }
