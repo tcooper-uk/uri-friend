@@ -1,24 +1,32 @@
 package tcooper.io;
 
-import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.SQLException;
+import java.time.ZonedDateTime;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
+import tcooper.io.model.UriParts;
 import tcooper.io.uri.UriService;
-
-import java.net.URISyntaxException;
-import java.sql.SQLException;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @DisplayName("Given I send a request to the URI shortener")
 @ExtendWith(MockitoExtension.class)
@@ -27,7 +35,7 @@ public class UriShortenerTest {
     @Mock
     UriRepository uriRepository;
 
-    @Spy
+    @Mock
     UriService uriService;
 
     @InjectMocks
@@ -43,10 +51,15 @@ public class UriShortenerTest {
             ArgumentCaptor<String> scheme = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> authority = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> relativePath = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<Long> shortUrlId = ArgumentCaptor.forClass(Long.class);
 
             when(uriRepository.upsertScheme(anyString())).thenReturn(1L);
             when(uriRepository.upsertAuthority(anyString())).thenReturn(3L);
             when(uriRepository.upsertRelativePath(anyString())).thenReturn(5L);
+            when(uriRepository.insertShortUrl(any(ZonedDateTime.class), anyLong(), anyLong(), anyLong()))
+                .thenReturn(123L);
+
+            when(uriService.shortenUri(anyLong())).thenReturn(URI.create("http://example.com/a"));
 
             String url = "http://test.com/a_new_uri?query=test&another=test#bookmark";
 
@@ -55,12 +68,13 @@ public class UriShortenerTest {
             verify(uriRepository).upsertScheme(scheme.capture());
             verify(uriRepository).upsertAuthority(authority.capture());
             verify(uriRepository).upsertRelativePath(relativePath.capture());
-            verify(uriService, atMostOnce()).shortenUri(any(long[].class));
+            verify(uriService).shortenUri(shortUrlId.capture());
 
             assertEquals("http", scheme.getValue());
             assertEquals("test.com", authority.getValue());
             assertEquals("/a_new_uri?query=test&another=test#bookmark", relativePath.getValue());
-            assertTrue(uriInfo.getShortUri().toString().matches("http:\\/\\/example\\.com\\/1.3.5"));
+            assertEquals( 123L, shortUrlId.getValue());
+            assertTrue(uriInfo.getShortUri().toString().matches("http://example.com/a"));
         }
 
         @DisplayName("Then an error is thrown when the URI is not valid")
@@ -79,11 +93,10 @@ public class UriShortenerTest {
         @Test
         void fullUriCanBeFound() throws URISyntaxException, SQLException {
 
-            String shortUrl = "http://example.com/1d3g5";
+            String shortUrl = "http://example.com/a";
 
-            when(uriRepository.getScheme(anyLong())).thenReturn("http");
-            when(uriRepository.getAuthority(anyLong())).thenReturn("example.com");
-            when(uriRepository.getRelativePath(anyLong())).thenReturn("/path/to/page");
+            when(uriService.decomposeShortUriV2(any(URI.class))).thenReturn(123L);
+            when(uriRepository.getUriParts(anyLong())).thenReturn(new UriParts("http", "example.com", "/path/to/page"));
 
             URIInfo uriInfo = uriShortener.resolveUri(shortUrl);
 
@@ -102,9 +115,10 @@ public class UriShortenerTest {
         @DisplayName("Then an error is thrown when the ID cannot be found")
         @Test
         void idNotFoundInDatabase() throws SQLException {
-            String shortUrl = "http://example.com/1d3g5";
+            String shortUrl = "http://example.com/a";
 
-            when(uriRepository.getScheme(anyLong())).thenReturn(null);
+            when(uriService.decomposeShortUriV2(any(URI.class))).thenReturn(123L);
+            when(uriRepository.getUriParts(anyLong())).thenReturn(null);
 
             assertThrows(IllegalStateException.class, () -> uriShortener.resolveUri(shortUrl));
         }

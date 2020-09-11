@@ -3,13 +3,13 @@ package tcooper.io;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.internal.cglib.proxy.$MethodProxy;
 import com.google.inject.servlet.GuiceFilter;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.flywaydb.core.Flyway;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
 import tcooper.io.guice.DataModule;
 import tcooper.io.guice.JettyModule;
@@ -22,14 +22,16 @@ public class Application {
     private final GuiceFilter filter;
     private final GuiceResteasyBootstrapServletContextListener listener;
     private final int port;
+    private final Flyway flyway;
 
     @Inject
     public Application(GuiceFilter filter,
         GuiceResteasyBootstrapServletContextListener listener,
-        @Port int port) {
+        @Port int port, Flyway flyway) {
         this.filter = filter;
         this.listener = listener;
         this.port = port;
+        this.flyway = flyway;
     }
 
     private static Injector bootstrap() {
@@ -44,12 +46,22 @@ public class Application {
     public void run() throws Exception {
         System.out.println("Starting...");
 
+        // setup db
+        processFlyway();
+
         // start server
         var server = createServer(port);
         server.start();
         server.join();
 
         System.out.println("Stopping...");
+    }
+
+    /**
+     * Run the flyway migration for the database.
+     */
+    private void processFlyway() {
+        flyway.migrate();
     }
 
     /**

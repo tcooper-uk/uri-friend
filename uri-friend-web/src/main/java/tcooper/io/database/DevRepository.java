@@ -1,11 +1,14 @@
 package tcooper.io.database;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import tcooper.io.model.UriParts;
 
 /**
  * Basic in mem store for development.
  */
+@Deprecated
 public class DevRepository implements UriRepository {
 
     private static Map<Long, String> _store;
@@ -29,6 +32,17 @@ public class DevRepository implements UriRepository {
     public long upsertRelativePath(String relativePath) {
         _store.put(5L, relativePath);
         return 5L;
+    }
+
+    @Override
+    public long insertShortUrl(ZonedDateTime dateTime, long schemeId, long authorityId,
+        long relativePathId) {
+        return 1234;
+    }
+
+    @Override
+    public UriParts getUriParts(long urlId) {
+        return new UriParts("http", "test.com", "/hello");
     }
 
     @Override

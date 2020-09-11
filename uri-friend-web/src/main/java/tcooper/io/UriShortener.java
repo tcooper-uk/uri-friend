@@ -2,15 +2,16 @@ package tcooper.io;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import tcooper.io.database.UriRepository;
-import tcooper.io.model.URIInfo;
-import tcooper.io.uri.UriParser;
-import tcooper.io.uri.UriService;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import tcooper.io.database.UriRepository;
+import tcooper.io.model.URIInfo;
+import tcooper.io.model.UriParts;
+import tcooper.io.uri.UriParser;
+import tcooper.io.uri.UriService;
 
 public class UriShortener {
 
@@ -19,8 +20,8 @@ public class UriShortener {
 
     private static final String BAD_URI_ERROR = "The supplied URI is invalid.";
 
-    private UriRepository uriRepository;
-    private UriService uriService;
+    private final UriRepository uriRepository;
+    private final UriService uriService;
 
     @Inject
     public UriShortener(UriRepository uriRepository, UriService uriService) {
@@ -41,8 +42,10 @@ public class UriShortener {
             long schemeId = uriRepository.upsertScheme(uri.getScheme());
             long authorityId = uriRepository.upsertAuthority(uri.getAuthority());
             long relativePathId = uriRepository.upsertRelativePath(buildRelativePath(uri));
+            long shortUrlId = uriRepository.insertShortUrl(ZonedDateTime.now(), schemeId, authorityId, relativePathId);
 
-            URI shortUri = uriService.shortenUri(new long[] {schemeId, authorityId, relativePathId});
+            //URI shortUri = uriService.shortenUri(new long[] {schemeId, authorityId, relativePathId});
+            URI shortUri = uriService.shortenUri(shortUrlId);
 
             return new URIInfo(uri, shortUri, LocalDateTime.now().plusDays(30));
 
@@ -59,21 +62,20 @@ public class UriShortener {
     public URIInfo resolveUri(String uriStr) throws URISyntaxException {
         var shortUri = parseUriString(uriStr);
 
-        long[] ids = uriService.decomposeUri(shortUri);
+        //long[] ids = uriService.decomposeShortUri(shortUri);
+        long uriId = uriService.decomposeShortUriV2(shortUri);
 
         try {
-            String scheme = uriRepository.getScheme(ids[0]);
-            String authority = uriRepository.getAuthority(ids[1]);
-            String relativePath = uriRepository.getRelativePath(ids[2]);
+            UriParts parts = uriRepository.getUriParts(uriId);
 
-            if(scheme == null || authority == null || relativePath == null){
+            if(parts == null){
                 throw new IllegalStateException("Unable to find the required items in the database");
             }
 
-            StringBuilder builder = new StringBuilder(scheme);
+            StringBuilder builder = new StringBuilder(parts.getScheme());
             builder.append("://")
-                    .append(authority)
-                    .append(relativePath);
+                    .append(parts.getAuthority())
+                    .append(parts.getRelativePath());
 
             var dbUriStr = builder.toString();
             var uri = UriParser.parse(dbUriStr);

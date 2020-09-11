@@ -2,22 +2,48 @@ package tcooper.io.uri;
 
 import com.google.common.primitives.Longs;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.net.URI;
+import java.util.Optional;
 import java.util.Random;
 
+/**
+ * This service is used to create a short URI from three database ID's
+ * We know we can do this better by just using the one ID.
+ *
+ * This service was experimental and may be deprecated
+ */
 @Singleton
 public class UriService {
 
     // We will move this out somewhere else
     private static final String NEW_AUTHORITY = "http://example.com";
 
+    private final UriEncoder uriEncoder;
+
+    @Inject
+    public UriService(UriEncoder uriEncoder) {
+        this.uriEncoder = uriEncoder;
+    }
+
+    /**
+     * Takes a uri, finds the path and decodes to the uri id.
+     * @param uri
+     * @return uri id
+     */
+    public long decomposeShortUriV2(URI uri) {
+        String path = uri.getPath().substring(1);
+        return uriEncoder.decode(path);
+    }
+
     /**
      * Take a previously shortened URI and gathers each database ID
      * @param uri A uri previously shortened
      * @return Array of database ID's
      */
-    public long[] decomposeUri(URI uri){
+    @Deprecated
+    public long[] decomposeShortUri(URI uri){
 
         if(uri == null)
             throw new IllegalArgumentException("Uri cannot be null");
@@ -70,10 +96,22 @@ public class UriService {
     }
 
     /**
-     * Method to id's of URI parts, concant these, and return the new URI
+     * Encodes the given uri id into a shortened URI.
+     * @param uriId
+     * @return full short uri
+     */
+    public URI shortenUri(long uriId) {
+        String path = uriEncoder.encode(uriId);
+        Optional<URI> optionalURI = UriParser.parse(NEW_AUTHORITY + "/" + path);
+        return optionalURI.orElse(null);
+    }
+
+    /**
+     * Method takes id's of URI parts, concatenates these, and return the new URI
      * @param uriPartIds a array of id [scheme, authority, relativePath,...]
      * @return a new URI
      */
+    @Deprecated
     public URI shortenUri(long[] uriPartIds) {
 
         if(uriPartIds.length < 3)
@@ -90,8 +128,7 @@ public class UriService {
                 .append(uriPartIds[2]);
 
         var newUriResult = UriParser.parse(builder.toString());
-
-        return newUriResult.isPresent() ? newUriResult.get() : null;
+        return newUriResult.orElse(null);
     }
 
     private char getUriChar() {

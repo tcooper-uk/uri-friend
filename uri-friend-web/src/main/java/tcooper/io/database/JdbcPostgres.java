@@ -1,16 +1,19 @@
 package tcooper.io.database;
 
-import org.postgresql.ds.PGConnectionPoolDataSource;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import org.postgresql.ds.PGConnectionPoolDataSource;
+import tcooper.io.model.UriParts;
 
 /**
  * Repository basic JDBC implementation for local postgres db.
  */
+@Deprecated
 public class JdbcPostgres implements UriRepository {
 
     private final Connection _dbConnection;
@@ -68,6 +71,46 @@ public class JdbcPostgres implements UriRepository {
         }
 
         return -1L;
+    }
+
+    @Override
+    public long insertShortUrl(ZonedDateTime dateTime, long schemeId, long authorityId,
+        long relativePathId) throws SQLException {
+
+        var statement = _dbConnection.prepareStatement(UriRepoStatements.INSERT_SHORT_URL_SQL, Statement.RETURN_GENERATED_KEYS);
+
+        LocalDateTime localDateTime = dateTime.toLocalDateTime();
+
+        statement.setTimestamp(1, Timestamp.valueOf(localDateTime));
+        statement.setLong(2, schemeId);
+        statement.setLong(3, authorityId);
+        statement.setLong(4, relativePathId);
+
+        statement.executeUpdate();
+
+        ResultSet resultSet = statement.getGeneratedKeys();
+        if(resultSet.next()){
+            return resultSet.getLong(1);
+        }
+
+        return -1L;
+    }
+
+    @Override
+    public UriParts getUriParts(long urlId) throws SQLException {
+        var statement = _dbConnection.prepareStatement(UriRepoStatements.QUERY_URL_SHORT_VALUES_SQL);
+        statement.setLong(1, urlId);
+
+        ResultSet results = statement.executeQuery();
+
+        if(results.next()){
+            String scheme = results.getString(1);
+            String authority = results.getString(2);
+            String relativePath = results.getString(3);
+            return new UriParts(scheme, authority, relativePath);
+        }
+
+        return null;
     }
 
     @Override
