@@ -28,7 +28,7 @@ public class UriServiceTest {
     @BeforeAll
     static void setUp() {
         uriEncoder = new UriEncoder();
-        uriService = new UriService(uriEncoder);
+        uriService = new UriService(uriEncoder, "http://example.com");
     }
 
     @DisplayName("When I have database ID's")

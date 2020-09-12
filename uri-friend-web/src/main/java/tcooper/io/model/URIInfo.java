@@ -10,20 +10,13 @@ public class URIInfo {
 
     private URI originalUri;
     private URI shortUri;
-    private boolean success;
+    private boolean success = true;
     private String message;
 
     @JsonIgnore
     private LocalDateTime expiration;
 
     public URIInfo() {
-    }
-
-    public URIInfo(URI originalUri, URI shortUri) {
-        this.originalUri = originalUri;
-        this.shortUri = shortUri;
-        expiration = LocalDateTime.now();
-        success = true;
     }
 
     public URIInfo(String errorMessage) {

@@ -54,8 +54,9 @@ public class UriShortener {
             return new URIInfo(uri, shortUri, LocalDateTime.now().plusDays(30));
 
         } catch (SQLException e) {
-            LOGGER.error("Error communicating with SQL when shortening URI", e);
-            return new URIInfo();
+            String msg = "Error communicating with SQL when shortening URI";
+            LOGGER.error(msg, e);
+            return new URIInfo(msg);
         }
     }
 
@@ -92,8 +93,9 @@ public class UriShortener {
             return new URIInfo(uri.get(), shortUri,LocalDateTime.now());
 
         } catch (SQLException e) {
-            LOGGER.error("Error communicating with SQL when resolving URI", e);
-            return new URIInfo();
+            String msg = "Error communicating with SQL when resolving URI";
+            LOGGER.error(msg, e);
+            return new URIInfo(msg);
         }
     }
 

@@ -8,6 +8,7 @@ import com.google.inject.Singleton;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Random;
+import tcooper.io.guice.ConfigurationModule.AppDomain;
 
 /**
  * This service is used to create a short URI from three database ID's We know we can do this better
@@ -19,13 +20,14 @@ import java.util.Random;
 public class UriService {
 
   // We will move this out somewhere else
-  private static final String NEW_AUTHORITY = "http://example.com";
-
   private final UriEncoder uriEncoder;
 
+  private final String applicationAuthority;
+
   @Inject
-  public UriService(UriEncoder uriEncoder) {
+  public UriService(UriEncoder uriEncoder, @AppDomain String applicationAuthority) {
     this.uriEncoder = uriEncoder;
+    this.applicationAuthority = applicationAuthority;
   }
 
   /**
@@ -114,7 +116,7 @@ public class UriService {
    */
   public URI shortenUri(long uriId) {
     String path = uriEncoder.encode(uriId);
-    Optional<URI> optionalURI = UriParser.parse(NEW_AUTHORITY + "/" + path);
+    Optional<URI> optionalURI = UriParser.parse(applicationAuthority + "/" + path);
     return optionalURI.orElse(null);
   }
 
@@ -131,7 +133,7 @@ public class UriService {
       throw new IllegalArgumentException("You did not supply enough ID's");
     }
 
-    StringBuilder builder = new StringBuilder(NEW_AUTHORITY);
+    StringBuilder builder = new StringBuilder(applicationAuthority);
 
     builder
         .append('/')
