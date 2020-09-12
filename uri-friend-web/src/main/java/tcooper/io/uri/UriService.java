@@ -1,5 +1,6 @@
 package tcooper.io.uri;
 
+import com.google.common.base.Strings;
 import com.google.common.primitives.Longs;
 
 import com.google.inject.Inject;
@@ -9,133 +10,147 @@ import java.util.Optional;
 import java.util.Random;
 
 /**
- * This service is used to create a short URI from three database ID's
- * We know we can do this better by just using the one ID.
- *
+ * This service is used to create a short URI from three database ID's We know we can do this better
+ * by just using the one ID.
+ * <p>
  * This service was experimental and may be deprecated
  */
 @Singleton
 public class UriService {
 
-    // We will move this out somewhere else
-    private static final String NEW_AUTHORITY = "http://example.com";
+  // We will move this out somewhere else
+  private static final String NEW_AUTHORITY = "http://example.com";
 
-    private final UriEncoder uriEncoder;
+  private final UriEncoder uriEncoder;
 
-    @Inject
-    public UriService(UriEncoder uriEncoder) {
-        this.uriEncoder = uriEncoder;
+  @Inject
+  public UriService(UriEncoder uriEncoder) {
+    this.uriEncoder = uriEncoder;
+  }
+
+  /**
+   * Takes a uri, finds the path and decodes to the uri id.
+   *
+   * @param uri
+   * @return uri id
+   */
+  public long decomposeShortUriV2(URI uri) {
+    String path = uri.getPath();
+
+    if (Strings.isNullOrEmpty(path)) {
+      throw new IllegalStateException("No path was provided");
     }
 
-    /**
-     * Takes a uri, finds the path and decodes to the uri id.
-     * @param uri
-     * @return uri id
-     */
-    public long decomposeShortUriV2(URI uri) {
-        String path = uri.getPath().substring(1);
-        return uriEncoder.decode(path);
+    return uriEncoder.decode(path.substring(1));
+  }
+
+  /**
+   * Take a previously shortened URI and gathers each database ID
+   *
+   * @param uri A uri previously shortened
+   * @return Array of database ID's
+   */
+  @Deprecated
+  public long[] decomposeShortUri(URI uri) {
+
+    if (uri == null) {
+      throw new IllegalArgumentException("Uri cannot be null");
     }
 
-    /**
-     * Take a previously shortened URI and gathers each database ID
-     * @param uri A uri previously shortened
-     * @return Array of database ID's
-     */
-    @Deprecated
-    public long[] decomposeShortUri(URI uri){
+    var fullPath = uri.getPath();
+    var parts = fullPath.split("/");
+    var path = parts[parts.length - 1];
 
-        if(uri == null)
-            throw new IllegalArgumentException("Uri cannot be null");
+    long[] results = new long[3];
+    int resultCounter = 0;
 
-        var fullPath = uri.getPath();
-        var parts = fullPath.split("/");
-        var path = parts[parts.length - 1];
+    int index = 0;
+    int lastAlphaIndex = 0;
 
-        long[] results = new long[3];
-        int resultCounter = 0;
+    for (char c : path.toCharArray()) {
 
-        int index = 0;
-        int lastAlphaIndex = 0;
+      String idStr = null;
 
-        for(char c : path.toCharArray()) {
+      if (index == path.length() - 1 && Character.isDigit(c)) {
+        // must be last id
+        idStr = path.substring(lastAlphaIndex, path.length());
+      }
 
-            String idStr = null;
+      // look for delimiter
+      if (Character.isAlphabetic(c)) {
+        idStr = path.substring(lastAlphaIndex, index);
+        lastAlphaIndex = index + 1;
+      }
 
-            if(index == path.length() - 1 && Character.isDigit(c)){
-                // must be last id
-                idStr = path.substring(lastAlphaIndex, path.length());
-            }
+      if (idStr != null) {
 
-            // look for delimiter
-            if(Character.isAlphabetic(c)){
-                idStr = path.substring(lastAlphaIndex, index);
-                lastAlphaIndex = index + 1;
-            }
-
-
-            if(idStr != null) {
-
-                var lValue = Longs.tryParse(idStr);
-                if (lValue == null)
-                    raiseUriFormatError();
-
-                results[resultCounter++] = lValue;
-
-                if (resultCounter == results.length)
-                    break;
-            }
-
-            index++;
+        var lValue = Longs.tryParse(idStr);
+        if (lValue == null) {
+          raiseUriFormatError();
         }
 
-        if(resultCounter != results.length)
-            raiseUriFormatError();
+        results[resultCounter++] = lValue;
 
-        return results;
+        if (resultCounter == results.length) {
+          break;
+        }
+      }
+
+      index++;
     }
 
-    /**
-     * Encodes the given uri id into a shortened URI.
-     * @param uriId
-     * @return full short uri
-     */
-    public URI shortenUri(long uriId) {
-        String path = uriEncoder.encode(uriId);
-        Optional<URI> optionalURI = UriParser.parse(NEW_AUTHORITY + "/" + path);
-        return optionalURI.orElse(null);
+    if (resultCounter != results.length) {
+      raiseUriFormatError();
     }
 
-    /**
-     * Method takes id's of URI parts, concatenates these, and return the new URI
-     * @param uriPartIds a array of id [scheme, authority, relativePath,...]
-     * @return a new URI
-     */
-    @Deprecated
-    public URI shortenUri(long[] uriPartIds) {
+    return results;
+  }
 
-        if(uriPartIds.length < 3)
-            throw new IllegalArgumentException("You did not supply enough ID's");
+  /**
+   * Encodes the given uri id into a shortened URI.
+   *
+   * @param uriId
+   * @return full short uri
+   */
+  public URI shortenUri(long uriId) {
+    String path = uriEncoder.encode(uriId);
+    Optional<URI> optionalURI = UriParser.parse(NEW_AUTHORITY + "/" + path);
+    return optionalURI.orElse(null);
+  }
 
-        StringBuilder builder = new StringBuilder(NEW_AUTHORITY);
+  /**
+   * Method takes id's of URI parts, concatenates these, and return the new URI
+   *
+   * @param uriPartIds a array of id [scheme, authority, relativePath,...]
+   * @return a new URI
+   */
+  @Deprecated
+  public URI shortenUri(long[] uriPartIds) {
 
-        builder
-                .append('/')
-                .append(uriPartIds[0])
-                .append(getUriChar())
-                .append(uriPartIds[1])
-                .append(getUriChar())
-                .append(uriPartIds[2]);
-
-        var newUriResult = UriParser.parse(builder.toString());
-        return newUriResult.orElse(null);
+    if (uriPartIds.length < 3) {
+      throw new IllegalArgumentException("You did not supply enough ID's");
     }
 
-    private char getUriChar() {
-        Random r = new Random();
-        return (char)(r.nextInt(26) + 'a');
-    }
-    private void raiseUriFormatError() throws IllegalArgumentException {
-        throw new IllegalArgumentException("The given short URI was not in a valid format");
-    }
+    StringBuilder builder = new StringBuilder(NEW_AUTHORITY);
+
+    builder
+        .append('/')
+        .append(uriPartIds[0])
+        .append(getUriChar())
+        .append(uriPartIds[1])
+        .append(getUriChar())
+        .append(uriPartIds[2]);
+
+    var newUriResult = UriParser.parse(builder.toString());
+    return newUriResult.orElse(null);
+  }
+
+  private char getUriChar() {
+    Random r = new Random();
+    return (char) (r.nextInt(26) + 'a');
+  }
+
+  private void raiseUriFormatError() throws IllegalArgumentException {
+    throw new IllegalArgumentException("The given short URI was not in a valid format");
+  }
 }

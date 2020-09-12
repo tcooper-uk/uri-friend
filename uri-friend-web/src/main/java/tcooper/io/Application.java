@@ -11,6 +11,8 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.flywaydb.core.Flyway;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tcooper.io.guice.DataModule;
 import tcooper.io.guice.JettyModule;
 import tcooper.io.guice.JettyModule.Port;
@@ -18,6 +20,8 @@ import tcooper.io.guice.ResourceModule;
 import tcooper.io.guice.RestEasyModule;
 
 public class Application {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
     private final GuiceFilter filter;
     private final GuiceResteasyBootstrapServletContextListener listener;
@@ -44,7 +48,7 @@ public class Application {
     }
 
     public void run() throws Exception {
-        System.out.println("Starting...");
+        LOGGER.info("Starting...");
 
         // setup db
         processFlyway();
@@ -54,7 +58,7 @@ public class Application {
         server.start();
         server.join();
 
-        System.out.println("Stopping...");
+        LOGGER.info("Stopping...");
     }
 
     /**

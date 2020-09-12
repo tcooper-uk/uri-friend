@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tcooper.io.database.UriRepository;
 import tcooper.io.model.URIInfo;
 import tcooper.io.model.UriParts;
@@ -14,6 +16,8 @@ import tcooper.io.uri.UriParser;
 import tcooper.io.uri.UriService;
 
 public class UriShortener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UriShortener.class);
 
     private static final char URI_QUERY_INDICATOR = '?';
     private static final char URI_FRAGMENT_INDICATOR = '#';
@@ -50,6 +54,7 @@ public class UriShortener {
             return new URIInfo(uri, shortUri, LocalDateTime.now().plusDays(30));
 
         } catch (SQLException e) {
+            LOGGER.error("Error communicating with SQL when shortening URI", e);
             return new URIInfo();
         }
     }
@@ -87,6 +92,7 @@ public class UriShortener {
             return new URIInfo(uri.get(), shortUri,LocalDateTime.now());
 
         } catch (SQLException e) {
+            LOGGER.error("Error communicating with SQL when resolving URI", e);
             return new URIInfo();
         }
     }

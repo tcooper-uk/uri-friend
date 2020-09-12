@@ -67,7 +67,8 @@ public class JdbiRepository implements UriRepository {
             handle.createQuery(UriRepoStatements.QUERY_URL_SHORT_VALUES_SQL)
             .bind(0 , urlId)
             .map((rs, ctx) -> new UriParts(rs.getString(1), rs.getString(2), rs.getString(3)))
-            .one()
+            .stream()
+            .findFirst().orElse(null)
         );
     }
 

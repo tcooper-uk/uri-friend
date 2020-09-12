@@ -2,6 +2,9 @@ package tcooper.io.web;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tcooper.io.UriShortener;
 import tcooper.io.database.JdbcPostgres;
 import tcooper.io.database.JdbiRepository;
@@ -22,6 +25,8 @@ import java.sql.SQLException;
 @Produces(MediaType.APPLICATION_JSON)
 public class UriShort {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(UriShort.class);
+
     private final UriShortener uriShortener;
 
     /**
@@ -36,26 +41,26 @@ public class UriShort {
     @Path("short")
     @POST
     public URIInfo shortenUri(@QueryParam("url") String url) {
-        System.out.println("URL to shorten: " + url);
+        LOGGER.info("URL to shorten: " + url);
 
         try {
             return uriShortener.shortenUri(url);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return new URIInfo();
+        } catch (URISyntaxException | IllegalStateException e) {
+            LOGGER.error("Error shortening URI {}.", url,  e);
+            return new URIInfo("Could not shorten url " + url);
         }
     }
 
     @Path("resolve")
     @POST
     public URIInfo resolveUri(@QueryParam("url") String url){
-        System.out.println("URL to resolve: " + url);
+        LOGGER.info("URL to resolve: " + url);
 
         try {
             return uriShortener.resolveUri(url);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return new URIInfo();
+        } catch (URISyntaxException | IllegalStateException e) {
+            LOGGER.error("Error resolving short URI {}.", url, e);
+            return new URIInfo("Could not resolve url " + url);
         }
     }
 }
