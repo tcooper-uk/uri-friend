@@ -27,7 +27,7 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     HikariDataSource ds = new HikariDataSource();
     ds.setJdbcUrl(getJdbcUrl());
-    return ds;
+    return dataSource = ds;
   }
 
   /**
