@@ -30,14 +30,12 @@ public class ConfigurationModule extends AbstractModule {
 
   @Provides
   @AppDomain
-  String getAppDomain() {
+  public String getAppDomain() {
     return appDomain;
   }
 
-  @Override
-  protected void configure() {
-    bind(Properties.class).toInstance(properties);
-  }
+  @Provides
+  public Properties getProperties() { return properties; }
 
   private Properties readProperties() throws IOException {
 
@@ -58,9 +56,5 @@ public class ConfigurationModule extends AbstractModule {
       throw new IllegalStateException("App domain is required.");
 
     return domain;
-  }
-
-  public Properties getProperties() {
-    return properties;
   }
 }

@@ -6,6 +6,7 @@ import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import java.io.IOException;
 import java.util.Properties;
+import javax.sql.DataSource;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -29,17 +30,17 @@ public class Application {
   private final GuiceFilter filter;
   private final GuiceResteasyBootstrapServletContextListener listener;
   private final int port;
-  private final Flyway flyway;
+  private final DataSource dataSource;
   private final Properties properties;
 
   @Inject
   public Application(GuiceFilter filter,
       GuiceResteasyBootstrapServletContextListener listener,
-      @Port int port, Flyway flyway, Properties properties) {
+      @Port int port, DataSource dataSource, Properties properties) {
     this.filter = filter;
     this.listener = listener;
     this.port = port;
-    this.flyway = flyway;
+    this.dataSource = dataSource;
     this.properties = properties;
   }
 
@@ -51,15 +52,12 @@ public class Application {
    */
   private static Injector bootstrap() throws IOException {
 
-    // try and get our properties to bootstrap
-    var configModule = new ConfigurationModule();
-
     // bootstrap the application
     return Guice.createInjector(
-        configModule,
+        new ConfigurationModule(),
         new JettyModule(),
         new RestEasyModule(),
-        new DataModule(configModule.getProperties()),
+        new DataModule(),
         new ResourceModule()
     );
   }
@@ -92,7 +90,13 @@ public class Application {
    * Run the flyway migration for the database.
    */
   private void processFlyway() {
-    flyway.migrate();
+
+    Flyway
+        .configure()
+        .createSchemas(true)
+        .baselineOnMigrate(true)
+        .dataSource(dataSource)
+        .load();
   }
 
   /**
