@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.eclipse.jetty.server.Handler;
@@ -24,6 +25,8 @@ import tcooper.io.guice.ResourceModule;
 import tcooper.io.guice.RestEasyModule;
 
 public class Application {
+
+  private static final String DEFAULT_ENVIRONMENT = "dev";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
@@ -50,11 +53,11 @@ public class Application {
    * @return Guice injector
    * @throws IOException - fail fast if we have no properties
    */
-  private static Injector bootstrap() throws IOException {
+  private static Injector bootstrap(String environment) throws IOException {
 
     // bootstrap the application
     return Guice.createInjector(
-        new ConfigurationModule(),
+        new ConfigurationModule(environment),
         new JettyModule(),
         new RestEasyModule(),
         new DataModule(),
@@ -69,7 +72,7 @@ public class Application {
    * @throws Exception - Fail fast.
    */
   public void run() throws Exception {
-    LOGGER.info("Starting...");
+    LOGGER.info("Running...");
 
     if (properties == null) {
       throw new RuntimeException("Application has no configuration. Panic.");
@@ -79,6 +82,7 @@ public class Application {
     processFlyway();
 
     // start server
+    LOGGER.info("Starting server on port {}", port);
     var server = createServer(port);
     server.start();
     server.join();
@@ -90,13 +94,14 @@ public class Application {
    * Run the flyway migration for the database.
    */
   private void processFlyway() {
-
+    LOGGER.info("Processing flyway...");
     Flyway
         .configure()
         .createSchemas(true)
         .baselineOnMigrate(true)
         .dataSource(dataSource)
-        .load();
+        .load()
+        .migrate();
   }
 
   /**
@@ -138,6 +143,12 @@ public class Application {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    bootstrap().getInstance(Application.class).run();
+    String env = Arrays.stream(args)
+        .findFirst()
+        .orElse(DEFAULT_ENVIRONMENT);
+
+    LOGGER.info("Environment: {}", env);
+
+    bootstrap(env).getInstance(Application.class).run();
   }
 }

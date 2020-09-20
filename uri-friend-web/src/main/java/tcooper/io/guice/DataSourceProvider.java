@@ -9,7 +9,9 @@ import javax.sql.DataSource;
 
 public class DataSourceProvider implements Provider<DataSource> {
 
-  private static String JDBC_PROP_NAME = "app.database.jdbc.url";
+  private static final String JDBC_PROP_NAME = "app.database.jdbc.url";
+  private static final String DB_USER_PROP_NAME = "app.database.user";
+  private static final String DB_PASSWORD_PROP_NAME = "app.database.password";
   private final Properties properties;
 
   private static DataSource dataSource = null;
@@ -27,6 +29,16 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     HikariDataSource ds = new HikariDataSource();
     ds.setJdbcUrl(getJdbcUrl());
+
+    String user = properties.getProperty(DB_USER_PROP_NAME);
+    String password = properties.getProperty(DB_PASSWORD_PROP_NAME);
+
+    if(!Strings.isNullOrEmpty(user) &&
+    !Strings.isNullOrEmpty(password)) {
+      ds.setUsername(user);
+      ds.setPassword(password);
+    }
+
     return dataSource = ds;
   }
 
