@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import tcooper.io.guice.ConfigurationModule;
 import tcooper.io.guice.DataModule;
 import tcooper.io.guice.JettyModule;
-import tcooper.io.guice.JettyModule.Port;
+import tcooper.io.guice.ConfigurationModule.Port;
 import tcooper.io.guice.ResourceModule;
 import tcooper.io.guice.RestEasyModule;
 

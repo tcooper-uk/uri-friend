@@ -11,21 +11,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.net.URL;
 import java.util.Properties;
+import javax.inject.Qualifier;
 
 public class ConfigurationModule extends AbstractModule {
 
 
   private static final String PROPERTIES_FILE_ENVIRONMENT = "app-%s.properties";
   private static final String APP_DOMAIN_PROPERTIES_KEY = "app.domain";
+  private static final String APP_PORT_PROPERTIES_KEY = "app.port";
 
   private final String environment;
   private final Properties properties;
   private final String appDomain;
+  private final int port;
 
   public ConfigurationModule(String environment) throws IOException {
     this.environment = environment;
     properties = readProperties();
     appDomain = readAppDomain();
+    port = readPort();
   }
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -35,6 +39,16 @@ public class ConfigurationModule extends AbstractModule {
   @AppDomain
   public String getAppDomain() {
     return appDomain;
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface Port {}
+
+  @Provides
+  @Port
+  public int providesPort() {
+    return this.port;
   }
 
   @Provides
@@ -61,5 +75,16 @@ public class ConfigurationModule extends AbstractModule {
       throw new IllegalStateException("App domain is required.");
 
     return domain;
+  }
+
+  private int readPort() {
+
+    String port = properties.getProperty(APP_PORT_PROPERTIES_KEY);
+    Integer finalPort = Integer.valueOf(port);
+
+    if(finalPort == null)
+      throw new IllegalStateException("App port is required.");
+
+    return finalPort;
   }
 }

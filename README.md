@@ -51,3 +51,33 @@ and with one million different paths that would looks something like:
 I think there is some further encoding we can do to reduce those numbers, btu first let's work on creating this.
 
 
+## Running
+
+### Create a network
+
+```
+docker network create urifriend-net
+```
+
+### Database
+
+Get your database running. Make sure you have somewhere to store your volumes e.g.
+
+```
+mkdir -p $HOME/docker/volumes/postgres
+```
+
+Spin up postgres
+
+```
+docker run --rm --name pg -e POSTGRES_PASSWORD=test -d -p 5432:5432 --net urifriend-net -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
+```
+
+### Uri friend service
+
+Spin up the uri shortening service
+
+```
+docker run --rm -d -p 8080:80 --name uri-friend --net urifriend-net tomco/uri-friend
+```
+
